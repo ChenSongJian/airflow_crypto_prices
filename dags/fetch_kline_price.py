@@ -14,7 +14,7 @@ from sql.kline import get_kline_datetime_sql, upsert_with_kline_sql
 from utils.ccxt import get_ccxt_ex
 
 CONNECTION_ID = 'crypto_prices_db'
-COLLECTING_EXCHANGES = ['binance']  #, 'bybit', 'okx', 'kraken', 'mexc', 'fake']  # fake is an example of invalid exchange
+COLLECTING_EXCHANGES = ['binance']  #, 'bybit', 'okx', 'kraken', 'mexc']
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ def get_kline_datetime(year_month, exchange):
 def fetch_kline(connection_id, exchange):
     timezone = pytz.timezone('Asia/Singapore')
     now = datetime.now(tz=timezone)
-    kline_datetime = now - timedelta(minutes=15 + now.minute % 15, seconds=now.second, microseconds=now.microsecond)
+    kline_datetime = now - timedelta(minutes=now.minute % 15, seconds=now.second, microseconds=now.microsecond)
     kline_timestamp = int(kline_datetime.timestamp()) * 1000
     logger.info(f'collecting kline for Exchange {exchange}, datetime = {kline_datetime}')
     ex = get_ccxt_ex(exchange)
@@ -71,7 +71,7 @@ def generate_dag(exchange):
             "retry_delay": timedelta(minutes=5),
         },
         description=f"Fetch kline price from {exchange}",
-        schedule=timedelta(minutes=15),
+        schedule_interval='3,18,33,48 * * * *',
         start_date=datetime(2021, 1, 1),
         catchup=False,
         tags=["example"],

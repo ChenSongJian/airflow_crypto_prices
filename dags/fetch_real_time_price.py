@@ -14,7 +14,7 @@ from utils.ccxt import get_ccxt_ex
 
 CONNECTION_ID = 'crypto_prices_db'
 INIT_TABLE_NAME = 'tickers'
-COLLECTING_EXCHANGES = ['binance', 'bybit', 'okx', 'kraken', 'mexc', 'fake']  # fake is an example of invalid exchange
+COLLECTING_EXCHANGES = ['binance', 'bybit', 'okx', 'kraken', 'mexc']
 
 
 def check_table_exists():
