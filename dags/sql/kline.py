@@ -9,8 +9,3 @@ INSERT INTO snapshot_{year_month} (base_coin, quote_coin, price, snapshot_dateti
 VALUES {new_rows}
 ON DUPLICATE KEY UPDATE price = VALUES(price), is_kline = VALUES(is_kline);
 """
-
-upsert_without_kline_sql = """
-UPDATE snapshot_{year_month} SET is_kline=true
-WHERE snapshot_datetime="{snapshot_datetime}" AND exchange="{exchange}"
-"""
