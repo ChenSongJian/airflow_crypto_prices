@@ -16,18 +16,23 @@ def fetch_tickers(connection_id, exchange):
 
     tickers = ex.fetch_tickers()
     ticker_data = []
+    timezone = pytz.timezone('Asia/Singapore')
+
     for ticker in tickers.values():
         symbol = ticker.get('symbol')
         close_price = ticker.get('close')
-        timestamp = ticker.get('timestamp', 0) // 1000
-        if not symbol or not close_price or not timestamp:
+        if not symbol or not close_price:
             continue
-        # no need to update outdated tickers
-        if timestamp < int(datetime.now().timestamp()) - 15 * 60:
-            continue
+        timestamp = ticker.get('timestamp')
+        if timestamp is None:
+            collect_datetime = datetime.now(tz=timezone)
+        else:
+            collect_datetime = datetime.fromtimestamp(timestamp // 1000).astimezone(tz=timezone)
         base, quote = symbol.split('/')
+        if exchange == 'bybit':
+            # bybit symbols are in 'ZKF/USDT:USDT' format
+            quote = quote.split(':')[0]
         price = decimal.Decimal(str(close_price))
-        collect_datetime = datetime.fromtimestamp(timestamp).astimezone(tz=pytz.timezone('Asia/Singapore'))
         ticker_data.append(f'("{base}", "{quote}", {price}, "{exchange}", "{collect_datetime}")')
     if ticker_data:
         mysql_hook = MySqlHook(mysql_conn_id=connection_id)

@@ -11,7 +11,7 @@ from sql.ticker import create_ticker_table_sql
 
 CONNECTION_ID = 'crypto_prices_db'
 INIT_TABLE_NAME = 'tickers'
-COLLECTING_EXCHANGES = ['binance', 'okx', 'fake']
+COLLECTING_EXCHANGES = ['binance', 'bybit', 'okx', 'kraken', 'mexc', 'fake']
 
 
 def check_table_exists():
