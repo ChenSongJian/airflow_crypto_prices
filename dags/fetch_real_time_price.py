@@ -66,5 +66,5 @@ def generate_dag(exchange):
     return dag
 
 
-for exchange in COLLECTING_EXCHANGES:
-    globals()[f"Dynamic_DAG_{exchange}"] = generate_dag(exchange)
+for exchange_name in COLLECTING_EXCHANGES:
+    globals()[f"Dynamic_DAG_{exchange_name}"] = generate_dag(exchange_name)
