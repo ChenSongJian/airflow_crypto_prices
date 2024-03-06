@@ -6,9 +6,9 @@ from airflow.providers.mysql.hooks.mysql import MySqlHook
 from airflow.utils.trigger_rule import TriggerRule
 from datetime import datetime, timedelta
 
-from sql.snapshot import create_snapshot_table_sql, snapshot_price_sql
-
 import pytz
+
+from sql.snapshot import create_snapshot_table_sql, snapshot_price_sql
 
 CONNECTION_ID = 'crypto_prices_db'
 INIT_TABLE_NAME = 'snapshot_{year_month}'

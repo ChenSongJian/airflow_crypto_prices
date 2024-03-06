@@ -11,7 +11,7 @@ from sql.ticker import create_ticker_table_sql
 
 CONNECTION_ID = 'crypto_prices_db'
 INIT_TABLE_NAME = 'tickers'
-COLLECTING_EXCHANGES = ['binance', 'bybit', 'okx', 'kraken', 'mexc', 'fake']
+COLLECTING_EXCHANGES = ['binance', 'bybit', 'okx', 'kraken', 'mexc', 'fake']  # fake is an example of invalid exchange
 
 
 def check_table_exists():
@@ -29,7 +29,7 @@ def generate_dag(exchange):
             "retry_delay": timedelta(minutes=5),
         },
         description=f"Fetch real time price from {exchange}",
-        schedule=timedelta(days=1),
+        schedule=timedelta(minutes=1),
         start_date=datetime(2021, 1, 1),
         catchup=False,
         tags=["example"],
@@ -67,4 +67,4 @@ def generate_dag(exchange):
 
 
 for exchange_name in COLLECTING_EXCHANGES:
-    globals()[f"Dynamic_DAG_{exchange_name}"] = generate_dag(exchange_name)
+    globals()[f"Dynamic_Ticker_DAG_{exchange_name}"] = generate_dag(exchange_name)
