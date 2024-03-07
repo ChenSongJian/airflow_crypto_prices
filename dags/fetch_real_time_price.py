@@ -6,18 +6,48 @@ from airflow.providers.mysql.hooks.mysql import MySqlHook
 from airflow.utils.trigger_rule import TriggerRule
 from datetime import datetime, timedelta
 
-from crypto_price.tikcer import fetch_tickers
-from sql.ticker import create_ticker_table_sql
+import decimal
+import pytz
+
+from sql.ticker import create_ticker_table_sql, upsert_tickers_sql
+from utils.ccxt_utils import get_ccxt_ex
 
 CONNECTION_ID = 'crypto_prices_db'
 INIT_TABLE_NAME = 'tickers'
-COLLECTING_EXCHANGES = ['binance', 'bybit', 'okx', 'kraken', 'mexc', 'fake']
+COLLECTING_EXCHANGES = ['binance', 'bybit', 'okx', 'mexc']
 
 
 def check_table_exists():
     mysql_hook = MySqlHook(mysql_conn_id=CONNECTION_ID)
     tables = mysql_hook.get_records(sql=f"SHOW TABLES LIKE '{INIT_TABLE_NAME}'")
     return 'skip_create_table_task' if tables else 'create_table_task'
+
+
+def fetch_tickers(connection_id, exchange):
+    ex = get_ccxt_ex(exchange)
+    tickers = ex.fetch_tickers()
+    ticker_data = []
+    timezone = pytz.timezone('Asia/Singapore')
+
+    for ticker in tickers.values():
+        symbol = ticker.get('symbol')
+        close_price = ticker.get('close')
+        if not symbol or not close_price:
+            continue
+        timestamp = ticker.get('timestamp')
+        if timestamp is None:
+            collect_datetime = datetime.now(tz=timezone)
+        else:
+            collect_datetime = datetime.fromtimestamp(timestamp // 1000).astimezone(tz=timezone)
+        base, quote = symbol.split('/')
+        if exchange == 'bybit':
+            # bybit symbols are in 'ZKF/USDT:USDT' format
+            quote = quote.split(':')[0]
+        price = decimal.Decimal(str(close_price))
+        ticker_data.append(f'("{base}", "{quote}", {price}, "{exchange}", "{collect_datetime}")')
+    if ticker_data:
+        mysql_hook = MySqlHook(mysql_conn_id=connection_id)
+        mysql_hook.run(upsert_tickers_sql.format(new_rows=(','.join(ticker_data))))
 
 
 def generate_dag(exchange):
@@ -29,7 +59,7 @@ def generate_dag(exchange):
             "retry_delay": timedelta(minutes=5),
         },
         description=f"Fetch real time price from {exchange}",
-        schedule=timedelta(days=1),
+        schedule=timedelta(seconds=30),
         start_date=datetime(2021, 1, 1),
         catchup=False,
         tags=["example"],
@@ -67,4 +97,4 @@ def generate_dag(exchange):
 
 
 for exchange_name in COLLECTING_EXCHANGES:
-    globals()[f"Dynamic_DAG_{exchange_name}"] = generate_dag(exchange_name)
+    globals()[f"Dynamic_Ticker_DAG_{exchange_name}"] = generate_dag(exchange_name)

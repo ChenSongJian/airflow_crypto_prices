@@ -14,7 +14,6 @@ CREATE TABLE tickers (
 );
 """
 
-
 upsert_tickers_sql = """
 INSERT INTO tickers (base_coin, quote_coin, price, exchange, collect_datetime)
 VALUES {new_rows}
