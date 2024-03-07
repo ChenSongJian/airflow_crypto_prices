@@ -10,11 +10,11 @@ import decimal
 import pytz
 
 from sql.ticker import create_ticker_table_sql, upsert_tickers_sql
-from utils.ccxt import get_ccxt_ex
+from utils.ccxt_utils import get_ccxt_ex
 
 CONNECTION_ID = 'crypto_prices_db'
 INIT_TABLE_NAME = 'tickers'
-COLLECTING_EXCHANGES = ['binance', 'bybit', 'okx', 'kraken', 'mexc']
+COLLECTING_EXCHANGES = ['binance', 'bybit', 'okx', 'mexc']
 
 
 def check_table_exists():

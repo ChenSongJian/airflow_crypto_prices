@@ -1,65 +1,21 @@
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
-from airflow.providers.mysql.hooks.mysql import MySqlHook
 from datetime import datetime, timedelta
 
-import ccxt
-import decimal
 import logging
-import traceback
-import pytz
 
-from sql.kline import get_kline_datetime_sql, upsert_with_kline_sql
-from utils.ccxt import get_ccxt_ex
+from celery_kline_tasks import fetch_kline_task
+from sql.kline import upsert_with_kline_sql
 
 CONNECTION_ID = 'crypto_prices_db'
-COLLECTING_EXCHANGES = ['binance']  #, 'bybit', 'okx', 'kraken', 'mexc']
+COLLECTING_EXCHANGES = ['binance', 'bybit', 'okx', 'mexc']
 
 logger = logging.getLogger(__name__)
 
 
-def get_kline_datetime(year_month, exchange):
-    mysql_hook = MySqlHook(mysql_conn_id=CONNECTION_ID)
-    sql = get_kline_datetime_sql.format(year_month=year_month, exchange=exchange)
-    kline_datetime = mysql_hook.get_first(sql=sql)[0]
-    return kline_datetime
-
-
 def fetch_kline(connection_id, exchange):
-    timezone = pytz.timezone('Asia/Singapore')
-    now = datetime.now(tz=timezone)
-    kline_datetime = now - timedelta(minutes=now.minute % 15, seconds=now.second, microseconds=now.microsecond)
-    kline_timestamp = int(kline_datetime.timestamp()) * 1000
-    logger.info(f'collecting kline for Exchange {exchange}, datetime = {kline_datetime}')
-    ex = get_ccxt_ex(exchange)
-    tickers = ex.fetch_tickers()
-    if not tickers:
-        logger.info(f'No available symbols in exchange {exchange}')
-        return
-    kline_list = []
-    for symbol in tickers.keys():
-        if '/' not in symbol:
-            # some symbol like "AXSBIDR" does not contain and returning bad symbol error
-            continue
-        base, quote = symbol.split('/')
-        if exchange == 'bybit':
-            quote = quote.split(':')[0]
-        try:
-            kline = ex.fetch_ohlcv(symbol=symbol, timeframe='15m', since=kline_timestamp, limit=1)
-            if kline:
-                price = decimal.Decimal(str(kline[0][4]))
-                kline_list.append(f'("{base}", "{quote}", {price}, "{kline_datetime}", "{exchange}", true)')
-        except ccxt.errors.BadSymbol:
-            continue
-        except Exception:
-            logger.error(traceback.format_exc())
-
-    logger.info(f'Updating {len(kline_list)} ticker prices into kline prices')
-    if kline_list:
-        mysql_hook = MySqlHook(mysql_conn_id=connection_id)
-        year_month = kline_datetime.strftime("%Y_%m")
-        mysql_hook.run(upsert_with_kline_sql.format(year_month=year_month, new_rows=(','.join(kline_list))))
+    fetch_kline_task.delay(exchange, connection_id, upsert_with_kline_sql)
 
 
 def generate_dag(exchange):
