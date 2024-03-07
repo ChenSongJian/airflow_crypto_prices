@@ -24,10 +24,10 @@ def generate_dag(exchange):
         default_args={
             "depends_on_past": False,
             "retries": 1,
-            "retry_delay": timedelta(minutes=5),
+            "retry_delay": timedelta(seconds=5),
         },
         description=f"Fetch kline price from {exchange}",
-        schedule_interval='3,18,33,48 * * * *',
+        schedule_interval='2,17,32,47 * * * *',
         start_date=datetime(2021, 1, 1),
         catchup=False,
         tags=["example"],

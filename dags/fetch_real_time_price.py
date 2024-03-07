@@ -59,7 +59,7 @@ def generate_dag(exchange):
             "retry_delay": timedelta(minutes=5),
         },
         description=f"Fetch real time price from {exchange}",
-        schedule=timedelta(minutes=1),
+        schedule=timedelta(seconds=30),
         start_date=datetime(2021, 1, 1),
         catchup=False,
         tags=["example"],

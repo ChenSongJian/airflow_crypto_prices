@@ -7,6 +7,7 @@ import ccxt
 import decimal
 import logging
 import pytz
+import time
 import traceback
 
 from utils.ccxt_utils import get_ccxt_ex
@@ -40,6 +41,7 @@ def fetch_kline_task(exchange, connection_id, upsert_with_kline_sql):
         try:
             kline = ex.fetch_ohlcv(symbol=symbol, timeframe='15m', since=kline_timestamp, limit=1)
             if kline:
+                time.sleep(0.1)
                 price = decimal.Decimal(str(kline[0][4]))
                 kline_list.append(f'("{base}", "{quote}", {price}, "{kline_datetime}", "{exchange}", true)')
         except ccxt.errors.BadSymbol:
