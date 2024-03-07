@@ -8,10 +8,8 @@ def get_ccxt_ex(exchange):
         ex = ccxt.bybit()
     elif exchange == 'okx':
         ex = ccxt.okx()
-    elif exchange == 'kraken':
-        ex = ccxt.bybit()
     elif exchange == 'mexc':
-        ex = ccxt.okx()
+        ex = ccxt.mexc()
     else:
         raise Exception(f'Exchange {exchange} not supported!')
     ex.enableRateLimit = True
